@@ -351,10 +351,15 @@ input.name{margin-top:26px;background:transparent;border:0;border-bottom:1px sol
 #spine .branch{fill:none;stroke-width:.6;opacity:.12;transition:opacity 1.2s,filter 1.2s}
 #spine .branch.hot{opacity:.8;filter:drop-shadow(0 0 3px currentColor)}
 #spine .strand.faded,#spine .branch.faded{opacity:.04!important;filter:none!important}
+.bgm-btn{position:fixed;top:12px;right:12px;z-index:50;width:36px;height:36px;border-radius:50%;border:1px solid rgba(201,168,76,.5);background:rgba(10,10,20,.6);color:#c9a84c;font-size:16px;cursor:pointer}
+.bgm-btn.off{opacity:.45;text-decoration:line-through}
 </style>
 </head>
 <body>
 <canvas id="stars"></canvas>
+<audio id="bgm" loop preload="auto" src="muzik.mp3"></audio>
+<button id="bgmBtn" class="bgm-btn" onclick="toggleBgm()" aria-label="Müziği aç/kapat">♪</button>
+
 <!-- omurga: 7 çakra, en altta kök -->
 <div id="spine" aria-hidden="true">
   <div class="sn" title="Sahasrara · Taç"><i style="background:#e1bee7"></i></div>
@@ -379,7 +384,7 @@ input.name{margin-top:26px;background:transparent;border:0;border-bottom:1px sol
     <p style="animation-delay:3.4s">Şimdi bu oyunu insan olarak oynuyoruz. Ama unuttuk ki aslında biz de bir varlığız.</p>
     <p style="animation-delay:4.6s;font-style:italic;color:rgba(201,168,76,.75)">Spiral, bunu hatırlamanın bir yolu.</p>
   </div>
-  <button class="btn" onclick="go('p-map')">Serüvene Başla →</button>
+  <button class="btn" onclick="startBgm();go('p-map')">Serüvene Başla →</button>
 </section>
 
 <!-- 2. HARİTA -->
@@ -1220,6 +1225,19 @@ function finishCreature(){
     document.getElementById('fail-txt').textContent=`Geçmek için en az ${PASS_NEED} doğru gerekiyor. Başka bir varlıkla tekrar dene.`;
     go('p-fail');
   }
+}
+</script>
+<script>
+/* arka plan müziği: "Serüvene Başla" dokunuşunda başlar, sağ üstten kapatılabilir */
+let bgmOn=true;
+function startBgm(){
+  try{const a=document.getElementById('bgm');if(!a)return;a.volume=0.5;a.play().catch(()=>{});}catch(e){}
+}
+function toggleBgm(){
+  try{const a=document.getElementById('bgm');const b=document.getElementById('bgmBtn');if(!a)return;
+    bgmOn=!bgmOn; a.muted=!bgmOn; b.classList.toggle('off',!bgmOn);
+    if(bgmOn){a.play().catch(()=>{});}
+  }catch(e){}
 }
 </script>
 </body>
