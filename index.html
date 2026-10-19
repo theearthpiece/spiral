@@ -853,6 +853,7 @@ function childNext(){
 const TARGET_OF={'p-root-intro':6,'p-creature':6,'p-sacral-intro':5,'p-creature-sacral':5,'p-solar-intro':4,'p-creature-solar':4,'p-heart-intro':3,'p-creature-heart':3,'p-throat-intro':2,'p-creature-throat':2,'p-ajna-intro':1,'p-creature-ajna':1};
 const KEEP_TARGET=['p-cdoc','p-cq','p-fail'];
 function setTarget(i){document.querySelectorAll('#spine .sn').forEach((n,k)=>n.classList.toggle('target',k===i));}
+const TRANSIT_ON=false; // true yapılırsa her basamak geçişinde çakra dengeleme ekranı araya girer
 const TRANSIT={'p-sacral-intro':'sac','p-solar-intro':'sol','p-heart-intro':'hrt','p-throat-intro':'thr','p-ajna-intro':'ajn'};
 function balNext(){
   const t=G.nextPath; G.nextPath=null;
@@ -950,7 +951,7 @@ document.addEventListener('keydown',e=>{
 });
 const RESUME_PAGES=['p-map','p-planets','p-creature','p-creature-sacral','p-creature-solar','p-creature-heart','p-creature-throat','p-creature-ajna'];
 function go(id){
-  if(TRANSIT[id]&&!G.skipPath){G.nextPath=id;id='p-balance';}
+  if(TRANSIT_ON&&TRANSIT[id]&&!G.skipPath){G.nextPath=id;id='p-balance';}
   else G.skipPath=false;
   if(RESUME_PAGES.includes(id))G.resumePage=id;
   saveProgress();
