@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spiral · Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#07070d;--card:#10101a;--line:rgba(201,168,76,.25);--gold:#c9a84c;--txt:#f5ead0;--dim:rgba(245,234,208,.55);--red:#ff6b5b}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Georgia,serif;font-size:14px}
+body{padding:16px;max-width:900px;margin:0 auto}
+h1{font-size:18px;letter-spacing:.18em;color:var(--gold);font-weight:normal;margin:6px 0 14px}
+input{width:100%;box-sizing:border-box;padding:10px 12px;background:#0b0b14;border:1px solid var(--line);color:var(--txt);border-radius:6px;font:inherit;margin-bottom:10px}
+button{padding:10px 16px;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:6px;font:inherit;letter-spacing:.12em;cursor:pointer}
+button:hover{background:rgba(201,168,76,.08)}
+.bar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap}
+.search{flex:1;min-width:180px;margin:0}
+.row{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.row b{color:var(--txt);font-size:15px}
+.meta{color:var(--dim);font-size:12px;margin-top:4px;line-height:1.5}
+.tag{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:10px;color:var(--gold);font-size:11px;margin-right:6px;margin-top:6px}
+.detail{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-top:10px}
+.detail h2{font-size:14px;color:var(--gold);letter-spacing:.12em;font-weight:normal;margin:14px 0 6px}
+.qa{border-bottom:1px dashed rgba(201,168,76,.15);padding:6px 0}
+.qa .q{color:var(--dim);font-size:12px}
+.qa .a{color:var(--txt)}
+.ok{color:#7fe3a3}.no{color:var(--red)}
+.err{color:var(--red);margin:8px 0}
+.hide{display:none}
+</style>
+</head>
+<body>
+<h1>SPİRAL · ADMİN</h1>
+
+<section id="login">
+  <input id="em" type="email" placeholder="Admin e-posta" autocomplete="username">
+  <input id="pw" type="password" placeholder="Şifre" autocomplete="current-password">
+  <button id="loginBtn">Giriş yap</button>
+  <p id="loginErr" class="err hide"></p>
+</section>
+
+<section id="panel" class="hide">
+  <div class="bar">
+    <input id="q" class="search" placeholder="İsim ara…">
+    <button id="outBtn">Çıkış</button>
+  </div>
+  <div id="count" class="meta"></div>
+  <div id="list"></div>
+  <div id="detail"></div>
+</section>
+
+<script>
+const SB_URL='https://qefffggkjzdypeolaneo.supabase.co';
+const SB_KEY='sb_publishable_FheSqM01hnwAeL2HcPSyFg_HrxCooIM';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+// basamak adları (resume_page)
+const PAGE_LABEL={
+  'p-map':'Galaktik harita',
+  'p-planets':'Gezegenler',
+  'p-creature':'Kök · varlık seçimi',
+  'p-creature-sacral':'Sakral · varlık seçimi',
+  'p-creature-solar':'Solar pleksus · varlık seçimi',
+  'p-creature-heart':'Kalp · varlık seçimi',
+  'p-creature-throat':'Boğaz · varlık seçimi',
+  'p-creature-ajna':'Ajna · varlık seçimi'
+};
+const CH_NAME=['Çekirdek sorular','',''];
+const CHAKRA={root:'Kök',sac:'Sakral',sol:'Solar pleksus',hrt:'Kalp',thr:'Boğaz',ajn:'Ajna',crown:'Taç'};
+
+let ALL=[];
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmt(t){return t?new Date(t).toLocaleString('tr-TR'):'-';}
+function stage(p){
+  const st=p.state||{};
+  const dn=st.balDone||{};
+  const doneCount=Object.keys(dn).filter(k=>dn[k]).length;
+  return {page:PAGE_LABEL[p.resume_page]||p.resume_page||'-', done:doneCount};
+}
+
+async function load(){
+  const {data,error}=await sb.from('players').select('name,name_key,resume_page,state,updated_at').order('updated_at',{ascending:false});
+  if(error){document.getElementById('count').textContent='Hata: '+error.message;return;}
+  ALL=data||[];
+  render();
+}
+function render(){
+  const term=document.getElementById('q').value.trim().toLocaleLowerCase('tr-TR');
+  const rows=ALL.filter(p=>!term||p.name.toLocaleLowerCase('tr-TR').includes(term));
+  document.getElementById('count').textContent=rows.length+' oyuncu';
+  document.getElementById('list').innerHTML=rows.map(p=>{
+    const s=stage(p);
+    return `<div class="row" data-k="${esc(p.name_key)}"><b>${esc(p.name)}</b>
+      <div class="meta">Basamak: ${esc(s.page)} · Işıldayan çakra: ${s.done}/7 · Son hareket: ${fmt(p.updated_at)}</div></div>`;
+  }).join('');
+}
+function showDetail(key){
+  const p=ALL.find(x=>x.name_key===key); if(!p)return;
+  const st=p.state||{};
+  let h=`<div class="detail"><h1 style="margin:0 0 8px">${esc(p.name)}</h1>
+    <div class="meta">Şu anki basamak: <b>${esc(stage(p).page)}</b> · Son hareket: ${fmt(p.updated_at)}</div>`;
+  h+='<h2>BÖLÜMLER</h2><div class="meta">'+(st.doneCh||[]).map((v,i)=>`Bölüm ${i+1}: ${v?'<span class="ok">tamam</span>':'<span class="no">açık değil</span>'}`).join('<br>')+'</div>';
+  const dn=st.balDone||{};
+  h+='<h2>ÇAKRALAR</h2><div class="meta">'+Object.keys(CHAKRA).map(k=>`${CHAKRA[k]}: ${dn[k]?'<span class="ok">ışıldıyor</span>':'soluk'}`).join(' · ')+'</div>';
+  h+='<h2>ÇEKİRDEK SORULAR</h2>';
+  const core=st.core||{};
+  const ck=Object.keys(core).sort();
+  h+= ck.length? ck.map(k=>{const c=core[k]||{};return `<div class="qa"><div class="q">${esc(c.q||k)}</div><div class="a">${esc(c.a||'')}</div></div>`;}).join('') : '<div class="meta">Henüz yok</div>';
+  h+='<h2>VARLIK QUİZLERİ</h2>';
+  const ans=st.answers||{};
+  const aks=Object.keys(ans);
+  h+= aks.length? aks.map(id=>{
+    const list=ans[id]||[];
+    const ok=list.filter(x=>x.ok).length;
+    return `<div class="meta" style="margin-top:8px"><b style="color:var(--txt)">${esc(id)}</b> · ${ok}/${list.length} doğru</div>`+
+      list.map(x=>`<div class="qa"><div class="q">${esc(x.q)}</div><div class="a ${x.ok?'ok':'no'}">${esc(x.a)}</div></div>`).join('');
+  }).join('') : '<div class="meta">Henüz yok</div>';
+  h+='</div>';
+  document.getElementById('detail').innerHTML=h;
+  document.getElementById('detail').scrollIntoView({behavior:'smooth'});
+}
+
+document.getElementById('loginBtn').onclick=async()=>{
+  const e=document.getElementById('em').value.trim(), pw=document.getElementById('pw').value;
+  const r=await sb.auth.signInWithPassword({email:e,password:pw});
+  const err=document.getElementById('loginErr');
+  if(r.error){err.textContent='Giriş başarısız: '+r.error.message;err.classList.remove('hide');return;}
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('panel').classList.remove('hide');
+  load();
+};
+document.getElementById('outBtn').onclick=async()=>{await sb.auth.signOut();location.reload();};
+document.getElementById('q').oninput=render;
+document.getElementById('list').onclick=e=>{const r=e.target.closest('.row'); if(r)showDetail(r.dataset.k);};
+(async()=>{const s=await sb.auth.getSession(); if(s.data&&s.data.session){document.getElementById('login').classList.add('hide');document.getElementById('panel').classList.remove('hide');load();}})();
+</script>
+</body>
+</html>
